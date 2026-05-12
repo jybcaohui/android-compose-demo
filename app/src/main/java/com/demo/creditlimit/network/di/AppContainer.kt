@@ -12,18 +12,15 @@ import com.demo.creditlimit.network.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * Manual DI container — created once in [CreditLimitApplication].
- *
- * **Replacing with Hilt:** annotate each property with @Provides / @Singleton
- * inside a @Module and delete this file.  No other changes needed in the
- * network layer itself.
- */
 class AppContainer(context: Context) {
 
-    /** Application-scoped coroutine scope for one-shot startup work. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val tokenManager: TokenManager = TokenManager.getInstance(context)
@@ -36,15 +33,28 @@ class AppContainer(context: Context) {
 
     val appName: String = "creditlimit"
 
+    /**
+     * null = DataStore not yet loaded
+     * true  = token exists (logged in)
+     * false = no token (not logged in)
+     */
+    private val _initialized = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean?> = combine(
+        _initialized,
+        tokenManager.accessTokenFlow
+    ) { initialized, token ->
+        if (!initialized) null else !token.isNullOrEmpty()
+    }.stateIn(appScope, SharingStarted.Eagerly, null)
+
     init {
-        appScope.launch { tokenManager.loadFromDataStore() }
         appScope.launch {
+            tokenManager.loadFromDataStore()
             gaidManager.loadFromDataStore()
+            _initialized.value = true
             gaidManager.fetchAndSave()
         }
     }
 
-    /** Generic ViewModel factory — avoids boilerplate per-ViewModel factories. */
     fun <VM : ViewModel> viewModelFactory(creator: () -> VM): ViewModelProvider.Factory =
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

@@ -1,18 +1,13 @@
 package com.demo.creditlimit.network.manager
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-
-private val Context.gaidDataStore: DataStore<Preferences> by preferencesDataStore(name = "gaid_prefs")
 
 class GaidManager private constructor(private val context: Context) {
 
@@ -24,7 +19,7 @@ class GaidManager private constructor(private val context: Context) {
     fun getGaid(): String? = cachedGaid
 
     suspend fun loadFromDataStore() {
-        val stored = context.gaidDataStore.data
+        val stored = context.appDataStore.data
             .map { it[KEY_GAID] }
             .firstOrNull()
         if (stored != null) cachedGaid = stored
@@ -39,7 +34,7 @@ class GaidManager private constructor(private val context: Context) {
         } ?: return
 
         cachedGaid = gaid
-        context.gaidDataStore.edit { it[KEY_GAID] = gaid }
+        context.appDataStore.edit { it[KEY_GAID] = gaid }
     }
 
     companion object {

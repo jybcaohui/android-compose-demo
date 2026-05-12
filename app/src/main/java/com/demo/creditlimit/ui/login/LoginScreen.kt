@@ -132,8 +132,9 @@ fun LoginScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 4.dp)
+                    .height(96.dp)
+                    .padding(top = 40.dp,start = 4.dp,
+                        end = 4.dp)
             ) {
                 Box(
                     modifier = Modifier

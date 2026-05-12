@@ -8,22 +8,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val application = context.applicationContext as CreditLimitApplication
+    val isLoggedIn by application.container.isLoggedIn.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,7 +47,8 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp),
+                .padding(top = 0.dp, bottom = 100.dp, start = 24.dp,
+                    end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -55,7 +64,15 @@ fun HomeScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(48.dp))
             Button(
-                onClick = { navController.navigate(Screen.Login.route) },
+                onClick = {
+                    val destination = if (isLoggedIn == true) {
+                        Screen.KycBasicInfo.route
+                    } else {
+                        Screen.Login.route
+                    }
+                    navController.navigate(destination)
+                },
+                enabled = isLoggedIn != null,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Get Started")
