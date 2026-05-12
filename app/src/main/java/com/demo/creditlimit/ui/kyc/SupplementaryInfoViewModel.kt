@@ -56,9 +56,9 @@ data class SuppFormState(
 // ── Sheet enum ─────────────────────────────────────────────────────────────
 
 enum class SuppSheet {
-    HOME_PROVINCE, HOME_CITY,
+    HOME_ADDRESS,
     ADDRESS_PROPERTY, WORK_TYPE, WORKING_TIME, INDUSTRY, DESIGNATION,
-    WORK_PROVINCE, WORK_CITY,
+    WORK_ADDRESS,
     MONTHLY_INCOME, SALARY_DAY
 }
 
@@ -72,6 +72,8 @@ sealed class SuppUiState {
         val provinces: List<AddrResp> = emptyList(),
         val homeCities: List<AddrResp> = emptyList(),
         val workCities: List<AddrResp> = emptyList(),
+        val isLoadingHomeCities: Boolean = false,
+        val isLoadingWorkCities: Boolean = false,
         val activeSheet: SuppSheet? = null,
         val isSubmitting: Boolean = false,
         val errorMsg: String? = null
@@ -113,9 +115,14 @@ class SupplementaryInfoViewModel(
         val ready = ready() ?: return
         _uiState.value = ready.copy(activeSheet = sheet)
         when (sheet) {
-            SuppSheet.HOME_PROVINCE, SuppSheet.WORK_PROVINCE -> loadProvinces()
-            SuppSheet.HOME_CITY -> ready.formState.homeProvince?.let { loadHomeCities(it.code) }
-            SuppSheet.WORK_CITY -> ready.formState.workProvince?.let { loadWorkCities(it.code) }
+            SuppSheet.HOME_ADDRESS -> {
+                loadProvinces()
+                ready.formState.homeProvince?.let { loadHomeCities(it.code) }
+            }
+            SuppSheet.WORK_ADDRESS -> {
+                loadProvinces()
+                ready.formState.workProvince?.let { loadWorkCities(it.code) }
+            }
             else -> Unit
         }
     }
@@ -136,26 +143,33 @@ class SupplementaryInfoViewModel(
     }
 
     private fun loadHomeCities(provinceCode: Long) {
+        ready()?.let { _uiState.value = it.copy(homeCities = emptyList(), isLoadingHomeCities = true) }
         viewModelScope.launch {
             val list = configRepository.getCities(provinceCode)
-            ready()?.let { _uiState.value = it.copy(homeCities = list) }
+            ready()?.let { _uiState.value = it.copy(homeCities = list, isLoadingHomeCities = false) }
         }
     }
 
     private fun loadWorkCities(provinceCode: Long) {
+        ready()?.let { _uiState.value = it.copy(workCities = emptyList(), isLoadingWorkCities = true) }
         viewModelScope.launch {
             val list = configRepository.getCities(provinceCode)
-            ready()?.let { _uiState.value = it.copy(workCities = list) }
+            ready()?.let { _uiState.value = it.copy(workCities = list, isLoadingWorkCities = false) }
         }
     }
 
     // ── Field selection ────────────────────────────────────────────────────
 
-    fun selectHomeProvince(province: AddrResp) = updateAndSave { form ->
-        form.copy(homeProvince = province, homeCity = null).also {
-            loadHomeCities(province.code)
-        }
+    // 在弹框内选省：不关闭弹框，清空市，加载市列表
+    fun selectHomeProvinceInSheet(province: AddrResp) {
+        val r = ready() ?: return
+        val newForm = r.formState.copy(homeProvince = province, homeCity = null)
+        _uiState.value = r.copy(formState = newForm)
+        loadHomeCities(province.code)
+        viewModelScope.launch { configRepository.saveSuppForm(gson.toJson(newForm)) }
     }
+
+    fun selectHomeProvince(province: AddrResp) = selectHomeProvinceInSheet(province)
 
     fun selectHomeCity(city: AddrResp) = updateAndSave { form ->
         form.copy(homeCity = city)
@@ -188,11 +202,15 @@ class SupplementaryInfoViewModel(
         form.copy(designation = item)
     }
 
-    fun selectWorkProvince(province: AddrResp) = updateAndSave { form ->
-        form.copy(workProvince = province, workCity = null).also {
-            loadWorkCities(province.code)
-        }
+    fun selectWorkProvinceInSheet(province: AddrResp) {
+        val r = ready() ?: return
+        val newForm = r.formState.copy(workProvince = province, workCity = null)
+        _uiState.value = r.copy(formState = newForm)
+        loadWorkCities(province.code)
+        viewModelScope.launch { configRepository.saveSuppForm(gson.toJson(newForm)) }
     }
+
+    fun selectWorkProvince(province: AddrResp) = selectWorkProvinceInSheet(province)
 
     fun selectWorkCity(city: AddrResp) = updateAndSave { form ->
         form.copy(workCity = city)
@@ -202,13 +220,7 @@ class SupplementaryInfoViewModel(
         form.copy(monthlyIncome = item)
     }
 
-    fun toggleSalaryDay(day: Int) = updateAndSave { form ->
-        val days = form.salaryDays.toMutableList()
-        if (days.contains(day)) {
-            days.remove(day)
-        } else if (days.size < 4) {
-            days.add(day)
-        }
+    fun confirmSalaryDays(days: List<Int>) = updateAndSave { form ->
         form.copy(salaryDays = days.sorted())
     }
 

@@ -53,7 +53,11 @@ import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
 import com.demo.creditlimit.navigation.Screen
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 
@@ -219,7 +223,7 @@ private fun SuppReadyContent(
                         form.homeProvince?.name,
                         form.homeCity?.name
                     ),
-                    onClick = { viewModel.openSheet(SuppSheet.HOME_PROVINCE) }
+                    onClick = { viewModel.openSheet(SuppSheet.HOME_ADDRESS) }
                 )
                 PickerRow(
                     label = "Type of Residence",
@@ -254,7 +258,7 @@ private fun SuppReadyContent(
                             form.workProvince?.name,
                             form.workCity?.name
                         ),
-                        onClick = { viewModel.openSheet(SuppSheet.WORK_PROVINCE) }
+                        onClick = { viewModel.openSheet(SuppSheet.WORK_ADDRESS) }
                     )
                 }
 
@@ -315,69 +319,72 @@ private fun SuppSheetContent(
 ) {
     val config = state.kycConfig
     when (sheet) {
-        SuppSheet.HOME_PROVINCE -> AddressSheet(
-            title = "Select State",
-            items = state.provinces,
-            selectedCode = state.formState.homeProvince?.code,
-            onSelect = { viewModel.selectHomeProvince(it) }
-        )
-        SuppSheet.HOME_CITY -> AddressSheet(
-            title = "Select City",
-            items = state.homeCities,
-            selectedCode = state.formState.homeCity?.code,
-            onSelect = { viewModel.selectHomeCity(it) }
+        SuppSheet.HOME_ADDRESS -> AddressSheet(
+            provinces = state.provinces,
+            cities = state.homeCities,
+            isLoadingCities = state.isLoadingHomeCities,
+            selectedProvinceCode = state.formState.homeProvince?.code,
+            selectedCityCode = state.formState.homeCity?.code,
+            onProvinceSelect = { viewModel.selectHomeProvinceInSheet(it) },
+            onCitySelect = { viewModel.selectHomeCity(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.ADDRESS_PROPERTY -> SingleSelectSheet(
             title = "Type of Residence",
             items = config?.addressProperty ?: emptyList(),
             selectedEnum = state.formState.addressProperty?.eneum,
-            onSelect = { viewModel.selectAddressProperty(it) }
+            onSelect = { viewModel.selectAddressProperty(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.WORK_TYPE -> SingleSelectSheet(
             title = "Employment Status",
             items = config?.workType ?: emptyList(),
             selectedEnum = state.formState.workType?.eneum,
-            onSelect = { viewModel.selectWorkType(it) }
+            onSelect = { viewModel.selectWorkType(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.WORKING_TIME -> SingleSelectSheet(
             title = "Working Years",
             items = config?.workingTime ?: emptyList(),
             selectedEnum = state.formState.workingTime?.eneum,
-            onSelect = { viewModel.selectWorkingTime(it) }
+            onSelect = { viewModel.selectWorkingTime(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.INDUSTRY -> SingleSelectSheet(
             title = "Type of Jobs",
             items = config?.industry ?: emptyList(),
             selectedEnum = state.formState.industry?.eneum,
-            onSelect = { viewModel.selectIndustry(it) }
+            onSelect = { viewModel.selectIndustry(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.DESIGNATION -> SingleSelectSheet(
             title = "Designation",
             items = config?.designation ?: emptyList(),
             selectedEnum = state.formState.designation?.eneum,
-            onSelect = { viewModel.selectDesignation(it) }
+            onSelect = { viewModel.selectDesignation(it) },
+            onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.WORK_PROVINCE -> AddressSheet(
-            title = "Select State",
-            items = state.provinces,
-            selectedCode = state.formState.workProvince?.code,
-            onSelect = { viewModel.selectWorkProvince(it) }
-        )
-        SuppSheet.WORK_CITY -> AddressSheet(
-            title = "Select City",
-            items = state.workCities,
-            selectedCode = state.formState.workCity?.code,
-            onSelect = { viewModel.selectWorkCity(it) }
+        SuppSheet.WORK_ADDRESS -> AddressSheet(
+            provinces = state.provinces,
+            cities = state.workCities,
+            isLoadingCities = state.isLoadingWorkCities,
+            selectedProvinceCode = state.formState.workProvince?.code,
+            selectedCityCode = state.formState.workCity?.code,
+            onProvinceSelect = { viewModel.selectWorkProvinceInSheet(it) },
+            onCitySelect = { viewModel.selectWorkCity(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.MONTHLY_INCOME -> SingleSelectSheet(
             title = "Monthly Income",
             items = config?.monthlyIncome ?: emptyList(),
             selectedEnum = state.formState.monthlyIncome?.eneum,
-            onSelect = { viewModel.selectMonthlyIncome(it) }
+            onSelect = { viewModel.selectMonthlyIncome(it) },
+            onClose = { viewModel.closeSheet() }
         )
         SuppSheet.SALARY_DAY -> SalaryDaySheet(
-            selected = state.formState.salaryDays,
-            onToggle = { viewModel.toggleSalaryDay(it) }
+            initialSelected = state.formState.salaryDays,
+            onConfirm = { viewModel.confirmSalaryDays(it) },
+            onClose = { viewModel.closeSheet() }
         )
     }
 }
@@ -385,54 +392,146 @@ private fun SuppSheetContent(
 // ── Sheet components ────────────────────────────────────────────────────────
 
 @Composable
-private fun AddressSheet(
-    title: String,
-    items: List<AddrResp>,
-    selectedCode: Long?,
-    onSelect: (AddrResp) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+private fun SheetHeader(title: String, onClose: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = title,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SuppText),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = SuppText)
         )
-        HorizontalDivider(color = SuppDivider)
-        if (items.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().height(120.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 32.dp),
-                modifier = Modifier.height(360.dp)
-            ) {
-                items(items) { addr ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(addr) }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = addr.name,
-                            style = TextStyle(fontSize = 15.sp, color = SuppText)
+        androidx.compose.material3.IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Close",
+                tint = SuppText
+            )
+        }
+    }
+}
+
+// 地址弹框：两个 Tab（Select City=省 / Select Region=市），Radio 在左侧
+@Composable
+private fun AddressSheet(
+    provinces: List<AddrResp>,
+    cities: List<AddrResp>,
+    isLoadingCities: Boolean,
+    selectedProvinceCode: Long?,
+    selectedCityCode: Long?,
+    onProvinceSelect: (AddrResp) -> Unit,
+    onCitySelect: (AddrResp) -> Unit,
+    onClose: () -> Unit
+) {
+    var activeTab by remember { mutableIntStateOf(0) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SheetHeader(title = "Please select", onClose = onClose)
+
+        // Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xFFF0F0F0))
+        ) {
+            listOf("Select City", "Select Region").forEachIndexed { idx, label ->
+                val isActive = activeTab == idx
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(2.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(if (isActive) SuppCard else Color.Transparent)
+                        .clickable { activeTab = idx }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isActive) SuppBlue else SuppLabel
                         )
-                        if (addr.code == selectedCode) {
-                            RadioButton(
-                                selected = true,
-                                onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = SuppBlue)
-                            )
-                        }
-                    }
-                    HorizontalDivider(color = SuppDivider, thickness = 0.5.dp)
+                    )
                 }
+                if (isActive && idx == 0) {
+                    // Blue underline effect handled by color change
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // List
+        if (activeTab == 0) {
+            // 省列表
+            AddrList(
+                items = provinces,
+                selectedCode = selectedProvinceCode,
+                isLoading = provinces.isEmpty(),
+                onSelect = { prov ->
+                    onProvinceSelect(prov)
+                    activeTab = 1  // 选完省自动切到市 Tab
+                }
+            )
+        } else {
+            // 市列表
+            AddrList(
+                items = cities,
+                selectedCode = selectedCityCode,
+                isLoading = isLoadingCities,
+                onSelect = { onCitySelect(it) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddrList(
+    items: List<AddrResp>,
+    selectedCode: Long?,
+    isLoading: Boolean,
+    onSelect: (AddrResp) -> Unit
+) {
+    if (isLoading || items.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(200.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(32.dp), color = SuppBlue)
+            else Text("No data", color = SuppLabel, style = TextStyle(fontSize = 14.sp))
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 32.dp),
+            modifier = Modifier.height(360.dp)
+        ) {
+            items(items) { addr ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelect(addr) }
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = addr.code == selectedCode,
+                        onClick = { onSelect(addr) },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = SuppBlue,
+                            unselectedColor = SuppLabel
+                        )
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = addr.name, style = TextStyle(fontSize = 15.sp, color = SuppText))
+                }
+                HorizontalDivider(color = SuppDivider, thickness = 0.5.dp)
             }
         }
     }
@@ -443,14 +542,11 @@ private fun SingleSelectSheet(
     title: String,
     items: List<ConfigResp>,
     selectedEnum: Long?,
-    onSelect: (ConfigResp) -> Unit
+    onSelect: (ConfigResp) -> Unit,
+    onClose: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SuppText),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
+        SheetHeader(title = "Please select", onClose = onClose)
         HorizontalDivider(color = SuppDivider)
         LazyColumn(
             contentPadding = PaddingValues(bottom = 32.dp),
@@ -461,21 +557,19 @@ private fun SingleSelectSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSelect(cfg) }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = cfg.item,
-                        style = TextStyle(fontSize = 15.sp, color = SuppText)
-                    )
-                    if (cfg.eneum == selectedEnum) {
-                        RadioButton(
-                            selected = true,
-                            onClick = null,
-                            colors = RadioButtonDefaults.colors(selectedColor = SuppBlue)
+                    RadioButton(
+                        selected = cfg.eneum == selectedEnum,
+                        onClick = { onSelect(cfg) },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = SuppBlue,
+                            unselectedColor = SuppLabel
                         )
-                    }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = cfg.item, style = TextStyle(fontSize = 15.sp, color = SuppText))
                 }
                 HorizontalDivider(color = SuppDivider, thickness = 0.5.dp)
             }
@@ -483,58 +577,82 @@ private fun SingleSelectSheet(
     }
 }
 
+// 发薪日弹框：7列日历格，选中显示蓝色圆圈，确认后关闭
 @Composable
 private fun SalaryDaySheet(
-    selected: List<Int>,
-    onToggle: (Int) -> Unit
+    initialSelected: List<Int>,
+    onConfirm: (List<Int>) -> Unit,
+    onClose: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
+    var pending by remember { mutableStateOf(initialSelected) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+        SheetHeader(title = "Please select", onClose = onClose)
+        HorizontalDivider(color = SuppDivider)
+        Spacer(Modifier.height(16.dp))
+
+        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+            (0 until 5).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    (1..7).forEach { col ->
+                        val day = row * 7 + col
+                        if (day <= 31) {
+                            val isSelected = pending.contains(day)
+                            val canSelect = isSelected || pending.size < 4
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(if (isSelected) SuppBlue else Color.Transparent)
+                                    .clickable(enabled = canSelect) {
+                                        pending = if (isSelected) {
+                                            pending - day
+                                        } else {
+                                            (pending + day).sorted()
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = day.toString(),
+                                    style = TextStyle(
+                                        fontSize = 15.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = when {
+                                            isSelected -> Color.White
+                                            canSelect -> SuppText
+                                            else -> SuppLabel
+                                        }
+                                    )
+                                )
+                            }
+                        } else {
+                            Box(modifier = Modifier.size(44.dp))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(if (pending.isNotEmpty()) SuppBlue else SuppDisabled)
+                .clickable(enabled = pending.isNotEmpty()) { onConfirm(pending) }
+                .padding(vertical = 14.dp),
+            contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Monthly Payday",
-                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SuppText)
+                text = "Confirm",
+                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             )
-            Text(
-                text = "${selected.size}/4",
-                style = TextStyle(fontSize = 13.sp, color = SuppLabel)
-            )
-        }
-        HorizontalDivider(color = SuppDivider)
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 32.dp),
-            modifier = Modifier.height(360.dp)
-        ) {
-            items((1..31).toList()) { day ->
-                val isSelected = selected.contains(day)
-                val canSelect = isSelected || selected.size < 4
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = canSelect) { onToggle(day) }
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Day $day",
-                        style = TextStyle(
-                            fontSize = 15.sp,
-                            color = if (canSelect) SuppText else SuppLabel
-                        )
-                    )
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = if (canSelect) ({ onToggle(day) }) else null
-                    )
-                }
-                HorizontalDivider(color = SuppDivider, thickness = 0.5.dp)
-            }
         }
     }
 }
@@ -605,7 +723,7 @@ private fun StepProgressBar(currentStep: Int, totalSteps: Int) {
 
 private fun buildAddressDisplay(province: String?, city: String?): String? {
     if (province == null) return null
-    return if (city != null) "$province · $city" else province
+    return if (city != null) "$province/$city" else province
 }
 
 // Alias for AddrResp used in sheet (avoids import clash)
