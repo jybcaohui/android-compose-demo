@@ -8,6 +8,7 @@ import com.demo.creditlimit.network.manager.GaidManager
 import com.demo.creditlimit.network.manager.RetrofitManager
 import com.demo.creditlimit.network.manager.TokenManager
 import com.demo.creditlimit.network.repository.AuthRepository
+import com.demo.creditlimit.network.repository.ConfigRepository
 import com.demo.creditlimit.network.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ class AppContainer(context: Context) {
 
     val authRepository: AuthRepository = AuthRepository(apiService, tokenManager)
     val userRepository: UserRepository = UserRepository(apiService)
+    val configRepository: ConfigRepository = ConfigRepository(apiService, context)
 
     val appName: String = "creditlimit"
 

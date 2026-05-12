@@ -1,9 +1,12 @@
 package com.demo.creditlimit.network.api
 
+import com.demo.creditlimit.network.model.request2.AddrResp
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.KycConfigResp
 import com.demo.creditlimit.network.model.request2.LoginReq
 import com.demo.creditlimit.network.model.request2.LoginResp
+import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
 import com.demo.creditlimit.network.model.request2.VCodeReq
@@ -12,6 +15,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -53,6 +57,20 @@ interface ApiService {
     suspend fun submitSuppInfo(
         @Body request: SupplementUpdateReqV2
     ): BaseResponse<Void>
+
+    // ── Config / Address ──────────────────────────────────────────────────
+
+    @GET("v1/config/kyc")
+    suspend fun getKycConfig(): BaseResponse<KycConfigResp>
+
+    @GET("v1/addr/provinces")
+    suspend fun getProvinces(): BaseResponse<List<AddrResp>>
+
+    @GET("v1/addr/cities")
+    suspend fun getCities(@Query("pc") provinceCode: Long): BaseResponse<List<AddrResp>>
+
+    @GET("v1/user/supp")
+    suspend fun getSuppInfo(): BaseResponse<SupplementResp>
 
     // ── Credit line ────────────────────────────────────────────────────────
 
