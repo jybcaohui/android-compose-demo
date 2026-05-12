@@ -3,6 +3,7 @@ package com.demo.creditlimit.network.repository
 import com.demo.creditlimit.network.api.ApiService
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
 import com.demo.creditlimit.network.state.NetworkResult
@@ -29,4 +30,8 @@ class UserRepository(
 
     fun submitCreditLine(): Flow<NetworkResult<Void>> =
         executeRequest { apiService.submitCreditLine() }
+
+    suspend fun getSuppInfo(): SupplementResp? = runCatching {
+        apiService.getSuppInfo().data
+    }.getOrNull()
 }

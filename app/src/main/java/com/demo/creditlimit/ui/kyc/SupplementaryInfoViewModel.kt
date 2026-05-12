@@ -6,6 +6,7 @@ import com.demo.creditlimit.network.model.request2.AddrResp
 import com.demo.creditlimit.network.model.request2.ConfigResp
 import com.demo.creditlimit.network.model.request2.HomeAddress
 import com.demo.creditlimit.network.model.request2.KycConfigResp
+import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.WorkAddress
 import com.demo.creditlimit.network.repository.ConfigRepository
@@ -100,12 +101,27 @@ class SupplementaryInfoViewModel(
     private suspend fun loadInitialData() {
         val kycConfig = configRepository.getKycConfig()
         val savedJson = configRepository.loadSuppForm()
-        val savedForm = savedJson?.let {
-            runCatching { gson.fromJson(it, SuppFormState::class.java) }.getOrNull()
-        } ?: SuppFormState()
-        _uiState.value = SuppUiState.Ready(
-            kycConfig = kycConfig,
-            formState = savedForm
+        val form = if (savedJson != null) {
+            runCatching { gson.fromJson(savedJson, SuppFormState::class.java) }.getOrNull()
+                ?: SuppFormState()
+        } else {
+            buildFormFromServer(kycConfig) ?: SuppFormState()
+        }
+        _uiState.value = SuppUiState.Ready(kycConfig = kycConfig, formState = form)
+    }
+
+    private suspend fun buildFormFromServer(kycConfig: KycConfigResp?): SuppFormState? {
+        val s = userRepository.getSuppInfo() ?: return null
+        if (s.workType == 0L) return null
+        fun List<ConfigResp>.find(enum: Long) = firstOrNull { it.eneum == enum }
+        return SuppFormState(
+            addressProperty = kycConfig?.addressProperty?.find(s.addressProperty),
+            workType = kycConfig?.workType?.find(s.workType),
+            workingTime = kycConfig?.workingTime?.find(s.workingTime),
+            industry = kycConfig?.industry?.find(s.industry),
+            designation = kycConfig?.designation?.find(s.designation),
+            monthlyIncome = kycConfig?.monthlyIncome?.find(s.monthlyIncome),
+            salaryDays = s.salaryDay?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList()
         )
     }
 
