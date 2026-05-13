@@ -19,6 +19,9 @@ class ConfigRepository(
 
     private val kycConfigKey = stringPreferencesKey("kyc_config_json")
     private val suppFormKey = stringPreferencesKey("supp_form_json")
+    private val basicFormKey = stringPreferencesKey("basic_form_json")
+    private val emergencyFormKey = stringPreferencesKey("emergency_form_json")
+    private val bindCardFormKey = stringPreferencesKey("bind_card_form_json")
 
     // ── KYC Config ─────────────────────────────────────────────────────────
 
@@ -58,5 +61,44 @@ class ConfigRepository(
 
     suspend fun clearSuppForm() {
         context.appDataStore.edit { it.remove(suppFormKey) }
+    }
+
+    // ── Basic info form ────────────────────────────────────────────────────────
+
+    suspend fun saveBasicForm(json: String) {
+        context.appDataStore.edit { it[basicFormKey] = json }
+    }
+
+    suspend fun loadBasicForm(): String? =
+        context.appDataStore.data.map { it[basicFormKey] }.firstOrNull()
+
+    suspend fun clearBasicForm() {
+        context.appDataStore.edit { it.remove(basicFormKey) }
+    }
+
+    // ── Emergency contact form ─────────────────────────────────────────────────
+
+    suspend fun saveEmergencyForm(json: String) {
+        context.appDataStore.edit { it[emergencyFormKey] = json }
+    }
+
+    suspend fun loadEmergencyForm(): String? =
+        context.appDataStore.data.map { it[emergencyFormKey] }.firstOrNull()
+
+    suspend fun clearEmergencyForm() {
+        context.appDataStore.edit { it.remove(emergencyFormKey) }
+    }
+
+    // ── Bind card form ─────────────────────────────────────────────────────────
+
+    suspend fun saveBindCardForm(json: String) {
+        context.appDataStore.edit { it[bindCardFormKey] = json }
+    }
+
+    suspend fun loadBindCardForm(): String? =
+        context.appDataStore.data.map { it[bindCardFormKey] }.firstOrNull()
+
+    suspend fun clearBindCardForm() {
+        context.appDataStore.edit { it.remove(bindCardFormKey) }
     }
 }

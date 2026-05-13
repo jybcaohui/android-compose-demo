@@ -1,8 +1,11 @@
 package com.demo.creditlimit.network.repository
 
 import com.demo.creditlimit.network.api.ApiService
+import com.demo.creditlimit.network.model.request2.BasicResp
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
+import com.demo.creditlimit.network.model.request2.BindBankCardReq
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.IfscInfoResp
 import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
@@ -34,4 +37,15 @@ class UserRepository(
     suspend fun getSuppInfo(): SupplementResp? = runCatching {
         apiService.getSuppInfo().data
     }.getOrNull()
+
+    suspend fun getBasicInfo(): BasicResp? = runCatching {
+        apiService.getBasicInfo().data
+    }.getOrNull()
+
+    suspend fun getIfscInfo(code: String): IfscInfoResp? = runCatching {
+        apiService.getIfscInfo(code).data
+    }.getOrNull()
+
+    fun bindBankCard(request: BindBankCardReq): Flow<NetworkResult<Void>> =
+        executeRequest { apiService.bindBankCard(request) }
 }

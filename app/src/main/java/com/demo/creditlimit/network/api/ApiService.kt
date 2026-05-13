@@ -1,8 +1,11 @@
 package com.demo.creditlimit.network.api
 
 import com.demo.creditlimit.network.model.request2.AddrResp
+import com.demo.creditlimit.network.model.request2.BasicResp
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
+import com.demo.creditlimit.network.model.request2.BindBankCardReq
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.IfscInfoResp
 import com.demo.creditlimit.network.model.request2.KycConfigResp
 import com.demo.creditlimit.network.model.request2.LoginReq
 import com.demo.creditlimit.network.model.request2.LoginResp
@@ -40,6 +43,9 @@ interface ApiService {
 
     // ── KYC ───────────────────────────────────────────────────────────────
 
+    @GET("v1/user/basic")
+    suspend fun getBasicInfo(): BaseResponse<BasicResp>
+
     @POST("v1/user/basic/v2")
     suspend fun submitBasicInfo(
         @Body request: BasicUpdateReqV2
@@ -71,6 +77,14 @@ interface ApiService {
 
     @GET("v1/user/supp")
     suspend fun getSuppInfo(): BaseResponse<SupplementResp>
+
+    // ── Bank card ─────────────────────────────────────────────────────────────
+
+    @GET("v1/user/ifsc/info")
+    suspend fun getIfscInfo(@Query("ifscCode") code: String): BaseResponse<IfscInfoResp>
+
+    @POST("v1/user/bindBankCard")
+    suspend fun bindBankCard(@Body request: BindBankCardReq): BaseResponse<Void>
 
     // ── Credit line ────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.demo.creditlimit.ui.home.HomeScreen
 import com.demo.creditlimit.ui.kyc.BasicInfoScreen
+import com.demo.creditlimit.ui.kyc.BindCardScreen
 import com.demo.creditlimit.ui.kyc.EmergencyContactScreen
 import com.demo.creditlimit.ui.kyc.SupplementaryInfoScreen
 import com.demo.creditlimit.ui.login.LoginScreen
@@ -34,6 +35,9 @@ fun AppNavGraph(
         }
         composable(Screen.KycSupplementaryInfo.route) {
             SupplementaryInfoScreen(navController = navController)
+        }
+        composable(Screen.KycBindCard.route) {
+            BindCardScreen(navController = navController)
         }
         composable(Screen.CreditResult.route) {
             CreditResultScreen(navController = navController)
