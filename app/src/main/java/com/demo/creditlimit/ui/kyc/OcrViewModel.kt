@@ -156,6 +156,7 @@ class OcrViewModel(
         }
     }
 
+    fun reportError(msg: String) = updateReady { it.copy(isProcessing = false, errorMsg = msg) }
     fun clearError() = updateReady { it.copy(errorMsg = null) }
     fun clearAgeWarning() = updateReady { it.copy(ageWarningVisible = false) }
 

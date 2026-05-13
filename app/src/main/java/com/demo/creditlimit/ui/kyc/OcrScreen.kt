@@ -1,10 +1,13 @@
 package com.demo.creditlimit.ui.kyc
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -123,19 +126,48 @@ fun OcrScreen(navController: NavController) {
         }
     }
 
-    // Camera URI holder
+    // Camera state: both URI (for TakePicture) and File (for direct read after capture)
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingCameraFile by remember { mutableStateOf<File?>(null) }
 
-    // Camera launcher
+    // Camera launcher — reads image directly from File to avoid ContentResolver URI issues
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
-            pendingCameraUri?.let { uri ->
-                capturedDisplayUri = uri
-                scope.launch {
-                    val bytes = withContext(Dispatchers.IO) { compressImage(context, uri) }
-                    bytes?.let { viewModel.uploadAndOcr(it) }
-                }
+            val uri = pendingCameraUri ?: return@rememberLauncherForActivityResult
+            val file = pendingCameraFile ?: return@rememberLauncherForActivityResult
+            capturedDisplayUri = uri
+            scope.launch {
+                val bytes = withContext(Dispatchers.IO) { compressImageFromFile(file) }
+                if (bytes != null) viewModel.uploadAndOcr(bytes)
+                else viewModel.reportError("Failed to read camera image")
             }
+        }
+    }
+
+    // Creates a camera file+URI pair and stores them, then launches camera
+    fun doLaunchCamera() {
+        val dir = File(context.cacheDir, "camera_photos").also { it.mkdirs() }
+        val file = File(dir, "ocr_${System.currentTimeMillis()}.jpg")
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        pendingCameraFile = file
+        pendingCameraUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    // Camera permission launcher — requests CAMERA then calls doLaunchCamera
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) doLaunchCamera()
+        else scope.launch { snackbarHostState.showSnackbar("Camera permission denied") }
+    }
+
+    // Checks permission then launches camera
+    fun launchCamera() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            doLaunchCamera()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -181,12 +213,7 @@ fun OcrScreen(navController: NavController) {
                     capturedBitmap = capturedBitmap,
                     navController = navController,
                     viewModel = viewModel,
-                    onCameraClick = {
-                        val file = File(File(context.cacheDir, "camera_photos").also { it.mkdirs() }, "ocr_${System.currentTimeMillis()}.jpg")
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                        pendingCameraUri = uri
-                        cameraLauncher.launch(uri)
-                    },
+                    onCameraClick = { launchCamera() },
                     onGalleryClick = { galleryLauncher.launch("image/*") }
                 )
 
@@ -200,10 +227,7 @@ fun OcrScreen(navController: NavController) {
                         ImageSourceSheet(
                             onCamera = {
                                 viewModel.hideSourceSheet()
-                                val file = File(File(context.cacheDir, "camera_photos").also { it.mkdirs() }, "ocr_${System.currentTimeMillis()}.jpg")
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                                pendingCameraUri = uri
-                                cameraLauncher.launch(uri)
+                                launchCamera()
                             },
                             onGallery = {
                                 viewModel.hideSourceSheet()
@@ -810,6 +834,29 @@ private fun compressImage(context: android.content.Context, uri: Uri): ByteArray
     val original = context.contentResolver.openInputStream(uri)?.use {
         BitmapFactory.decodeStream(it)
     } ?: return null
+    val maxDim = 720
+    val scaled = if (original.width > maxDim || original.height > maxDim) {
+        val ratio = minOf(maxDim.toFloat() / original.width, maxDim.toFloat() / original.height)
+        Bitmap.createScaledBitmap(
+            original,
+            (original.width * ratio).toInt(),
+            (original.height * ratio).toInt(),
+            true
+        )
+    } else original
+    val out = ByteArrayOutputStream()
+    var quality = 90
+    do {
+        out.reset()
+        scaled.compress(Bitmap.CompressFormat.JPEG, quality, out)
+        quality -= 10
+    } while (out.size() > 200 * 1024 && quality > 10)
+    out.toByteArray()
+}.getOrNull()
+
+// Reads camera photo directly from File — avoids ContentResolver URI permission issues
+private fun compressImageFromFile(file: File): ByteArray? = runCatching {
+    val original = BitmapFactory.decodeFile(file.absolutePath) ?: return null
     val maxDim = 720
     val scaled = if (original.width > maxDim || original.height > maxDim) {
         val ratio = minOf(maxDim.toFloat() / original.width, maxDim.toFloat() / original.height)
