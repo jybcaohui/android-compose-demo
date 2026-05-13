@@ -50,7 +50,7 @@ import com.demo.creditlimit.network.model.request2.ConfigResp
 internal val KycBlue = Color(0xFF1B7FE8)
 internal val KycBg = Color(0xFFF5F5F5)
 internal val KycCard = Color(0xFFFFFFFF)
-internal val KycLabel = Color(0xFF9E9E9E)
+internal val KycLabel = Color(0xFF6E6E6E)
 internal val KycText = Color(0xFF212121)
 internal val KycDivider = Color(0xFFEEEEEE)
 internal val KycDisabled = Color(0xFFB0BEC5)
@@ -124,10 +124,10 @@ internal fun KycPickerRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp)
+            .padding(vertical = 10.dp)
     ) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -164,9 +164,9 @@ internal fun KycInputRow(
     trailingContent: (@Composable () -> Unit)? = null,
     onValueChange: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -201,9 +201,9 @@ internal fun KycReadonlyRow(
     value: String?,
     isLast: Boolean = false
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             text = value ?: "—",
             style = TextStyle(
