@@ -103,6 +103,7 @@ private fun DebugPageList(navController: NavController) {
         "Emergency Contact" to Screen.KycEmergencyContact.route,
         "Basic Info" to Screen.KycBasicInfo.route,
         "Supplementary Info" to Screen.KycSupplementaryInfo.route,
+        "OCR" to Screen.KycOcr.route,
         "Bind Card" to Screen.KycBindCard.route,
         "Credit Result" to Screen.CreditResult.route,
     )

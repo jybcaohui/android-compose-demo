@@ -1,19 +1,24 @@
 package com.demo.creditlimit.network.api
 
+import com.demo.creditlimit.network.model.request2.AadhaarFrontResp
 import com.demo.creditlimit.network.model.request2.AddrResp
 import com.demo.creditlimit.network.model.request2.BasicResp
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
 import com.demo.creditlimit.network.model.request2.BindBankCardReq
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.IdentityInfoReq
 import com.demo.creditlimit.network.model.request2.IfscInfoResp
 import com.demo.creditlimit.network.model.request2.KycConfigResp
 import com.demo.creditlimit.network.model.request2.LoginReq
 import com.demo.creditlimit.network.model.request2.LoginResp
+import com.demo.creditlimit.network.model.request2.OcrUpdateReq
+import com.demo.creditlimit.network.model.request2.OssUploadResp
 import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
 import com.demo.creditlimit.network.model.request2.VCodeReq
 import com.demo.creditlimit.network.response.BaseResponse
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
@@ -85,6 +90,22 @@ interface ApiService {
 
     @POST("v1/user/bindBankCard")
     suspend fun bindBankCard(@Body request: BindBankCardReq): BaseResponse<Void>
+
+    // ── OSS upload ────────────────────────────────────────────────────────────
+
+    @POST("v1/oss/upload")
+    suspend fun uploadImage(@Body body: RequestBody): BaseResponse<OssUploadResp>
+
+    // ── OCR ───────────────────────────────────────────────────────────────────
+
+    @GET("v1/user/ocr/aadhaarFront")
+    suspend fun getAadhaarFrontHistory(): BaseResponse<AadhaarFrontResp>
+
+    @POST("v1/user/acc/ocr/aadhaarFront")
+    suspend fun submitAadhaarFrontOcr(@Body request: OcrUpdateReq): BaseResponse<AadhaarFrontResp>
+
+    @POST("v1/user/identity")
+    suspend fun submitIdentity(@Body request: IdentityInfoReq): BaseResponse<Void>
 
     // ── Credit line ────────────────────────────────────────────────────────
 

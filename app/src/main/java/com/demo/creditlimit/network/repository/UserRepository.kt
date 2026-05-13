@@ -1,16 +1,21 @@
 package com.demo.creditlimit.network.repository
 
 import com.demo.creditlimit.network.api.ApiService
+import com.demo.creditlimit.network.model.request2.AadhaarFrontResp
 import com.demo.creditlimit.network.model.request2.BasicResp
 import com.demo.creditlimit.network.model.request2.BasicUpdateReqV2
 import com.demo.creditlimit.network.model.request2.BindBankCardReq
 import com.demo.creditlimit.network.model.request2.Emerge
+import com.demo.creditlimit.network.model.request2.IdentityInfoReq
 import com.demo.creditlimit.network.model.request2.IfscInfoResp
+import com.demo.creditlimit.network.model.request2.OcrUpdateReq
 import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
 import com.demo.creditlimit.network.state.NetworkResult
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class UserRepository(
     private val apiService: ApiService
@@ -48,4 +53,21 @@ class UserRepository(
 
     fun bindBankCard(request: BindBankCardReq): Flow<NetworkResult<Void>> =
         executeRequest { apiService.bindBankCard(request) }
+
+    suspend fun uploadImage(bytes: ByteArray): String? = runCatching {
+        val body = bytes.toRequestBody("application/octet-stream".toMediaType())
+        apiService.uploadImage(body).data?.url
+    }.getOrNull()
+
+    suspend fun getAadhaarFrontHistory(): AadhaarFrontResp? = runCatching {
+        apiService.getAadhaarFrontHistory().data
+    }.getOrNull()
+
+    suspend fun submitAadhaarFrontOcr(imageUrl: String): AadhaarFrontResp? = runCatching {
+        val req = OcrUpdateReq().apply { url = imageUrl }
+        apiService.submitAadhaarFrontOcr(req).data
+    }.getOrNull()
+
+    fun submitIdentity(request: IdentityInfoReq): Flow<NetworkResult<Void>> =
+        executeRequest { apiService.submitIdentity(request) }
 }

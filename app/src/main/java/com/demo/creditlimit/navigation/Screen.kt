@@ -7,5 +7,6 @@ sealed class Screen(val route: String) {
     object KycEmergencyContact : Screen("kyc_emergency_contact")
     object KycSupplementaryInfo : Screen("kyc_supplementary_info")
     object KycBindCard : Screen("kyc_bind_card")
+    object KycOcr : Screen("kyc_ocr")
     object CreditResult : Screen("credit_result")
 }
