@@ -187,7 +187,7 @@ private fun SuppReadyContent(
                     modifier = Modifier.padding(vertical = 12.dp)
                 )
 
-                PickerRow(
+                KycPickerRow(
                     label = "Home State and District",
                     value = buildAddressDisplay(
                         form.homeProvince?.name,
@@ -195,34 +195,34 @@ private fun SuppReadyContent(
                     ),
                     onClick = { viewModel.openSheet(SuppSheet.HOME_ADDRESS) }
                 )
-                PickerRow(
+                KycPickerRow(
                     label = "Type of Residence",
                     value = form.addressProperty?.item,
                     onClick = { viewModel.openSheet(SuppSheet.ADDRESS_PROPERTY) }
                 )
-                PickerRow(
+                KycPickerRow(
                     label = "Employment Status",
                     value = form.workType?.item,
                     onClick = { viewModel.openSheet(SuppSheet.WORK_TYPE) }
                 )
 
                 if (!form.isWorkConditionalHidden) {
-                    PickerRow(
+                    KycPickerRow(
                         label = "Working Years",
                         value = form.workingTime?.item,
                         onClick = { viewModel.openSheet(SuppSheet.WORKING_TIME) }
                     )
-                    PickerRow(
+                    KycPickerRow(
                         label = "Type of Jobs",
                         value = form.industry?.item,
                         onClick = { viewModel.openSheet(SuppSheet.INDUSTRY) }
                     )
-                    PickerRow(
+                    KycPickerRow(
                         label = "Designation",
                         value = form.designation?.item,
                         onClick = { viewModel.openSheet(SuppSheet.DESIGNATION) }
                     )
-                    PickerRow(
+                    KycPickerRow(
                         label = "Company State and District",
                         value = buildAddressDisplay(
                             form.workProvince?.name,
@@ -232,12 +232,12 @@ private fun SuppReadyContent(
                     )
                 }
 
-                PickerRow(
+                KycPickerRow(
                     label = "Monthly Income(Rupees)",
                     value = form.monthlyIncome?.item,
                     onClick = { viewModel.openSheet(SuppSheet.MONTHLY_INCOME) }
                 )
-                PickerRow(
+                KycPickerRow(
                     label = "Monthly Payday",
                     value = if (form.salaryDays.isEmpty()) null
                     else form.salaryDays.joinToString(", "),
@@ -299,36 +299,31 @@ private fun SuppSheetContent(
             onCitySelect = { viewModel.selectHomeCity(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.ADDRESS_PROPERTY -> SingleSelectSheet(
-            title = "Type of Residence",
+        SuppSheet.ADDRESS_PROPERTY -> KycSingleSelectSheet(
             items = config?.addressProperty ?: emptyList(),
             selectedEnum = state.formState.addressProperty?.eneum,
             onSelect = { viewModel.selectAddressProperty(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.WORK_TYPE -> SingleSelectSheet(
-            title = "Employment Status",
+        SuppSheet.WORK_TYPE -> KycSingleSelectSheet(
             items = config?.workType ?: emptyList(),
             selectedEnum = state.formState.workType?.eneum,
             onSelect = { viewModel.selectWorkType(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.WORKING_TIME -> SingleSelectSheet(
-            title = "Working Years",
+        SuppSheet.WORKING_TIME -> KycSingleSelectSheet(
             items = config?.workingTime ?: emptyList(),
             selectedEnum = state.formState.workingTime?.eneum,
             onSelect = { viewModel.selectWorkingTime(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.INDUSTRY -> SingleSelectSheet(
-            title = "Type of Jobs",
+        SuppSheet.INDUSTRY -> KycSingleSelectSheet(
             items = config?.industry ?: emptyList(),
             selectedEnum = state.formState.industry?.eneum,
             onSelect = { viewModel.selectIndustry(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.DESIGNATION -> SingleSelectSheet(
-            title = "Designation",
+        SuppSheet.DESIGNATION -> KycSingleSelectSheet(
             items = config?.designation ?: emptyList(),
             selectedEnum = state.formState.designation?.eneum,
             onSelect = { viewModel.selectDesignation(it) },
@@ -344,8 +339,7 @@ private fun SuppSheetContent(
             onCitySelect = { viewModel.selectWorkCity(it) },
             onClose = { viewModel.closeSheet() }
         )
-        SuppSheet.MONTHLY_INCOME -> SingleSelectSheet(
-            title = "Monthly Income",
+        SuppSheet.MONTHLY_INCOME -> KycSingleSelectSheet(
             items = config?.monthlyIncome ?: emptyList(),
             selectedEnum = state.formState.monthlyIncome?.eneum,
             onSelect = { viewModel.selectMonthlyIncome(it) },
@@ -356,31 +350,6 @@ private fun SuppSheetContent(
             onConfirm = { viewModel.confirmSalaryDays(it) },
             onClose = { viewModel.closeSheet() }
         )
-    }
-}
-
-// ── Sheet components ────────────────────────────────────────────────────────
-
-@Composable
-private fun SheetHeader(title: String, onClose: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = SuppText)
-        )
-        androidx.compose.material3.IconButton(onClick = onClose) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = SuppText
-            )
-        }
     }
 }
 
@@ -399,7 +368,7 @@ private fun AddressSheet(
     var activeTab by remember { mutableIntStateOf(0) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        SheetHeader(title = "Please select", onClose = onClose)
+        KycSheetHeader(title = "Please select", onClose = onClose)
 
         // Tabs
         Row(
@@ -507,46 +476,6 @@ private fun AddrList(
     }
 }
 
-@Composable
-private fun SingleSelectSheet(
-    title: String,
-    items: List<ConfigResp>,
-    selectedEnum: Long?,
-    onSelect: (ConfigResp) -> Unit,
-    onClose: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        SheetHeader(title = "Please select", onClose = onClose)
-        HorizontalDivider(color = SuppDivider)
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 32.dp),
-            modifier = Modifier.height(360.dp)
-        ) {
-            items(items) { cfg ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSelect(cfg) }
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = cfg.eneum == selectedEnum,
-                        onClick = { onSelect(cfg) },
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = SuppBlue,
-                            unselectedColor = SuppLabel
-                        )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(text = cfg.item, style = TextStyle(fontSize = 15.sp, color = SuppText))
-                }
-                HorizontalDivider(color = SuppDivider, thickness = 0.5.dp)
-            }
-        }
-    }
-}
-
 // 发薪日弹框：7列日历格，选中显示蓝色圆圈，确认后关闭
 @Composable
 private fun SalaryDaySheet(
@@ -557,7 +486,7 @@ private fun SalaryDaySheet(
     var pending by remember { mutableStateOf(initialSelected) }
 
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
-        SheetHeader(title = "Please select", onClose = onClose)
+        KycSheetHeader(title = "Please select", onClose = onClose)
         HorizontalDivider(color = SuppDivider)
         Spacer(Modifier.height(16.dp))
 
@@ -625,51 +554,6 @@ private fun SalaryDaySheet(
             )
         }
     }
-}
-
-// ── Reusable row ────────────────────────────────────────────────────────────
-
-@Composable
-private fun PickerRow(
-    label: String,
-    value: String?,
-    isLast: Boolean = false,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp)
-    ) {
-        Text(
-            text = label,
-            style = TextStyle(fontSize = 12.sp, color = SuppLabel)
-        )
-        Spacer(Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = value ?: "Please Select",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = if (value != null) FontWeight.Bold else FontWeight.Normal,
-                    color = if (value != null) SuppText else SuppLabel
-                ),
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = SuppLabel,
-                modifier = Modifier.size(14.dp)
-            )
-        }
-    }
-    if (!isLast) HorizontalDivider(color = SuppDivider)
 }
 
 // ── Step progress bar ───────────────────────────────────────────────────────

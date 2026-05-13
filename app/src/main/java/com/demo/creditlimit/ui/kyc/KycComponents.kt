@@ -124,7 +124,7 @@ internal fun KycPickerRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp)
+            .padding(vertical = 4.dp)
     ) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
         Spacer(Modifier.height(4.dp))
@@ -164,7 +164,7 @@ internal fun KycInputRow(
     trailingContent: (@Composable () -> Unit)? = null,
     onValueChange: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
         Spacer(Modifier.height(4.dp))
         Row(
@@ -201,7 +201,7 @@ internal fun KycReadonlyRow(
     value: String?,
     isLast: Boolean = false
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(text = label, style = TextStyle(fontSize = 12.sp, color = KycLabel))
         Spacer(Modifier.height(4.dp))
         Text(
@@ -255,7 +255,7 @@ internal fun KycSingleSelectSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSelect(cfg) }
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
