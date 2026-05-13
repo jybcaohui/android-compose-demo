@@ -1,7 +1,13 @@
 package com.demo.creditlimit.ui.kyc
 
+import android.app.Activity
+import android.content.Intent
+import android.provider.ContactsContract
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -101,7 +107,47 @@ private fun EmerReadyContent(
     navController: NavController,
     viewModel: EmergencyContactViewModel
 ) {
+    val context = LocalContext.current
     val form = state.formState
+
+    // Contact 1 picker
+    val contact1Launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
+                    null, null, null
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        viewModel.updateContact1Name(cursor.getString(0) ?: "")
+                        viewModel.updateContact1Phone(cursor.getString(1) ?: "")
+                    }
+                }
+            }
+        }
+    }
+
+    // Contact 2 picker
+    val contact2Launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
+                    null, null, null
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        viewModel.updateContact2Name(cursor.getString(0) ?: "")
+                        viewModel.updateContact2Phone(cursor.getString(1) ?: "")
+                    }
+                }
+            }
+        }
+    }
+
+    val pickContactIntent = Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI)
+
     Column(modifier = Modifier.fillMaxSize()) {
         KycTopBar(title = "Contact Information", onBack = { navController.popBackStack() })
 
@@ -125,7 +171,8 @@ private fun EmerReadyContent(
                 contact = form.contact1,
                 onNameChange = { viewModel.updateContact1Name(it) },
                 onPhoneChange = { viewModel.updateContact1Phone(it) },
-                onRelationClick = { viewModel.openSheet(EmerSheet.RELATION_1) }
+                onRelationClick = { viewModel.openSheet(EmerSheet.RELATION_1) },
+                onContactPickClick = { contact1Launcher.launch(pickContactIntent) }
             )
 
             Spacer(Modifier.height(12.dp))
@@ -135,7 +182,8 @@ private fun EmerReadyContent(
                 contact = form.contact2,
                 onNameChange = { viewModel.updateContact2Name(it) },
                 onPhoneChange = { viewModel.updateContact2Phone(it) },
-                onRelationClick = { viewModel.openSheet(EmerSheet.RELATION_2) }
+                onRelationClick = { viewModel.openSheet(EmerSheet.RELATION_2) },
+                onContactPickClick = { contact2Launcher.launch(pickContactIntent) }
             )
 
             Spacer(Modifier.height(24.dp))
@@ -151,7 +199,8 @@ private fun ContactCard(
     contact: ContactState,
     onNameChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
-    onRelationClick: () -> Unit
+    onRelationClick: () -> Unit,
+    onContactPickClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -176,9 +225,11 @@ private fun ContactCard(
             value = contact.name,
             trailingContent = {
                 Image(
-                    painter = painterResource(R.drawable.service),
+                    painter = painterResource(R.drawable.ic_contact),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(onClick = onContactPickClick)
                 )
             },
             onValueChange = onNameChange

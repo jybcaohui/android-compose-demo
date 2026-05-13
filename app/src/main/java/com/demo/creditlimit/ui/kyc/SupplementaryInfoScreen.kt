@@ -143,37 +143,7 @@ private fun SuppReadyContent(
 ) {
     val form = state.formState
     Column(modifier = Modifier.fillMaxSize()) {
-        // Top bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(SuppCard)
-                .padding(top = 40.dp, bottom = 12.dp, start = 4.dp, end = 16.dp)
-                .height(44.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .size(48.dp)
-                    .clickable { navController.popBackStack() },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.back),
-                    contentDescription = "Back",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Text(
-                text = "Other Information",
-                modifier = Modifier.align(Alignment.Center),
-                style = TextStyle(
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SuppText
-                )
-            )
-        }
+        KycTopBar(title = "Other Information", onBack = { navController.popBackStack() })
 
         Column(
             modifier = Modifier

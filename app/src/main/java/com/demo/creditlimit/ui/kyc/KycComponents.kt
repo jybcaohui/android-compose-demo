@@ -1,5 +1,6 @@
 package com.demo.creditlimit.ui.kyc
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,12 +58,13 @@ internal val KycDisabled = Color(0xFFB0BEC5)
 // ── Top bar ─────────────────────────────────────────────────────────────────
 
 @Composable
-internal fun KycTopBar(title: String, onBack: () -> Unit) {
+internal fun KycTopBar(title: String, onBack: () -> Unit, showService: Boolean = true) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(KycCard)
-            .padding(top = 40.dp, bottom = 12.dp, start = 4.dp, end = 12.dp)
+            .padding(top = 44.dp, bottom = 12.dp, start = 4.dp, end = 16.dp)
             .height(44.dp)
     ) {
         Box(
@@ -82,19 +85,28 @@ internal fun KycTopBar(title: String, onBack: () -> Unit) {
             modifier = Modifier.align(Alignment.Center),
             style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = KycText)
         )
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF0F0F0)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(R.drawable.service),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
+        if (showService) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFF0F0F0))
+                    .clickable {
+                        com.demo.creditlimit.ui.webview.CommonWebActivity.start(
+                            context,
+                            "Contact Us",
+                            com.demo.creditlimit.network.manager.EnvironmentManager.getContactUsUrl()
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.service),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
     }
 }

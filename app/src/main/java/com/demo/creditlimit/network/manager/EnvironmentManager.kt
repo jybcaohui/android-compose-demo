@@ -34,4 +34,6 @@ object EnvironmentManager {
     fun isDebug(): Boolean = current.isDebug
 
     fun current(): Environment = current
+
+    fun getContactUsUrl(): String = "https://www.adakredit.com/test.html"
 }
