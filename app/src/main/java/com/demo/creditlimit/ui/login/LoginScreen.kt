@@ -69,6 +69,7 @@ fun LoginScreen(navController: NavController) {
         factory = application.container.viewModelFactory {
             LoginViewModel(
                 authRepository = application.container.authRepository,
+                userRepository = application.container.userRepository,
                 appName = application.container.appName
             )
         }
@@ -106,8 +107,8 @@ fun LoginScreen(navController: NavController) {
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
-            is LoginUiState.Success -> {
-                navController.navigate(Screen.KycBasicInfo.route) {
+            is LoginUiState.NavigateTo -> {
+                navController.navigate(state.screen.route) {
                     popUpTo(Screen.Login.route) { inclusive = true }
                 }
             }

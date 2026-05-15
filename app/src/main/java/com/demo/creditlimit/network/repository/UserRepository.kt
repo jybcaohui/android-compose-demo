@@ -13,6 +13,7 @@ import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
 import com.demo.creditlimit.network.state.NetworkResult
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -30,8 +31,10 @@ class UserRepository(
     fun getEmergencyContacts(): Flow<NetworkResult<List<Emerge>>> =
         executeRequest { apiService.getEmergencyContacts() }
 
-    fun submitEmergencyContacts(contacts: List<Emerge>): Flow<NetworkResult<Void>> =
-        executeRequest { apiService.submitEmergencyContacts(contacts) }
+    fun submitEmergencyContacts(contacts: List<Emerge>): Flow<NetworkResult<Void>> {
+        val body = Gson().toJson(contacts).toRequestBody("application/json".toMediaType())
+        return executeRequest { apiService.submitEmergencyContacts(body) }
+    }
 
     fun submitSuppInfo(request: SupplementUpdateReqV2): Flow<NetworkResult<Void>> =
         executeRequest { apiService.submitSuppInfo(request) }

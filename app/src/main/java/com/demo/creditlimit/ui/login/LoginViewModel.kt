@@ -2,9 +2,11 @@ package com.demo.creditlimit.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.demo.creditlimit.navigation.KycRouter
+import com.demo.creditlimit.navigation.Screen
 import com.demo.creditlimit.network.exception.ErrorMessageMapper
-import com.demo.creditlimit.network.model.request2.LoginResp
 import com.demo.creditlimit.network.repository.AuthRepository
+import com.demo.creditlimit.network.repository.UserRepository
 import com.demo.creditlimit.network.state.NetworkResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
     private val appName: String
 ) : ViewModel() {
 
@@ -45,13 +48,36 @@ class LoginViewModel(
         }
         viewModelScope.launch {
             authRepository.login(phone, otp, deviceId, appName).collect { result ->
-                _uiState.value = when (result) {
-                    is NetworkResult.Loading -> LoginUiState.Loading
-                    is NetworkResult.Success -> LoginUiState.Success(result.data)
-                    is NetworkResult.Error -> LoginUiState.Error(
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = LoginUiState.Loading
+                    is NetworkResult.Success -> fetchProfileAndNavigate()
+                    is NetworkResult.Error -> _uiState.value = LoginUiState.Error(
                         ErrorMessageMapper.toUserMessage(result.exception)
                     )
-                    is NetworkResult.Empty -> LoginUiState.Error("Unexpected empty response.")
+                    is NetworkResult.Empty -> _uiState.value =
+                        LoginUiState.Error("Unexpected empty response.")
+                }
+            }
+        }
+    }
+
+    private fun fetchProfileAndNavigate() {
+        viewModelScope.launch {
+            userRepository.getUserProfile().collect { result ->
+                when (result) {
+                    is NetworkResult.Loading -> _uiState.value = LoginUiState.Loading
+                    is NetworkResult.Success -> {
+                        val nextScreen = KycRouter.resolveNextScreen(result.data.profile)
+                            ?: Screen.CreditResult
+                        _uiState.value = LoginUiState.NavigateTo(nextScreen)
+                    }
+                    is NetworkResult.Error -> {
+                        // Profile fetch failed — fall back to supplementary info (first KYC step)
+                        _uiState.value = LoginUiState.NavigateTo(Screen.KycSupplementaryInfo)
+                    }
+                    is NetworkResult.Empty -> {
+                        _uiState.value = LoginUiState.NavigateTo(Screen.KycSupplementaryInfo)
+                    }
                 }
             }
         }
@@ -71,6 +97,6 @@ sealed class LoginUiState {
     data object PhoneInput : LoginUiState()
     data class OtpSent(val phone: String) : LoginUiState()
     data object Loading : LoginUiState()
-    data class Success(val data: LoginResp) : LoginUiState()
+    data class NavigateTo(val screen: Screen) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }

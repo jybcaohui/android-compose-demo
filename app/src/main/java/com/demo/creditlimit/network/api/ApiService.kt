@@ -61,7 +61,7 @@ interface ApiService {
 
     @POST("v1/user/contacts/emergency")
     suspend fun submitEmergencyContacts(
-        @Body contacts: List<Emerge>
+        @Body contacts: RequestBody
     ): BaseResponse<Void>
 
     @POST("v1/user/supp/v2")
