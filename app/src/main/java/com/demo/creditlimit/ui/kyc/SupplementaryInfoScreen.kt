@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
+import com.demo.creditlimit.navigation.KycRouter
 import com.demo.creditlimit.navigation.Screen
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -91,7 +92,9 @@ fun SupplementaryInfoScreen(navController: NavController) {
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is SuppUiState.SubmitSuccess -> {
-                navController.navigate(Screen.KycEmergencyContact.route) {
+                val profile = application.container.userRepository.getProfileBitmask()
+                val next = KycRouter.resolveNextScreen(profile) ?: Screen.CreditResult
+                navController.navigate(next.route) {
                     popUpTo(Screen.KycSupplementaryInfo.route) { inclusive = true }
                 }
             }

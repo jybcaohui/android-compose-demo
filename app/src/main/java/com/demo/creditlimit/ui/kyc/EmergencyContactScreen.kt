@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
+import com.demo.creditlimit.navigation.KycRouter
 import com.demo.creditlimit.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,10 +69,13 @@ fun EmergencyContactScreen(navController: NavController) {
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
-            is EmerUiState.SubmitSuccess ->
-                navController.navigate(Screen.KycBasicInfo.route) {
+            is EmerUiState.SubmitSuccess -> {
+                val profile = application.container.userRepository.getProfileBitmask()
+                val next = KycRouter.resolveNextScreen(profile) ?: Screen.CreditResult
+                navController.navigate(next.route) {
                     popUpTo(Screen.KycEmergencyContact.route) { inclusive = true }
                 }
+            }
             is EmerUiState.Ready -> state.errorMsg?.let {
                 snackbarHostState.showSnackbar(it)
                 viewModel.clearError()

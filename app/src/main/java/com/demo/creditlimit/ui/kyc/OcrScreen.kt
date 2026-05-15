@@ -74,6 +74,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
+import com.demo.creditlimit.navigation.KycRouter
 import com.demo.creditlimit.navigation.Screen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -185,10 +186,13 @@ fun OcrScreen(navController: NavController) {
     // Effects
     LaunchedEffect(uiState) {
         when (val s = uiState) {
-            is OcrUiState.SubmitSuccess ->
-                navController.navigate(Screen.KycBindCard.route) {
+            is OcrUiState.SubmitSuccess -> {
+                val profile = application.container.userRepository.getProfileBitmask()
+                val next = KycRouter.resolveNextScreen(profile) ?: Screen.CreditResult
+                navController.navigate(next.route) {
                     popUpTo(Screen.KycOcr.route) { inclusive = true }
                 }
+            }
             is OcrUiState.Ready -> {
                 s.errorMsg?.let {
                     snackbarHostState.showSnackbar(it)

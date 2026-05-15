@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
+import com.demo.creditlimit.navigation.KycRouter
 import com.demo.creditlimit.navigation.Screen
 
 @Composable
@@ -60,10 +61,13 @@ fun BindCardScreen(navController: NavController) {
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
-            is BindCardUiState.SubmitSuccess ->
-                navController.navigate(Screen.CreditResult.route) {
+            is BindCardUiState.SubmitSuccess -> {
+                val profile = application.container.userRepository.getProfileBitmask()
+                val next = KycRouter.resolveNextScreen(profile) ?: Screen.CreditResult
+                navController.navigate(next.route) {
                     popUpTo(Screen.KycBindCard.route) { inclusive = true }
                 }
+            }
             is BindCardUiState.Ready -> state.cardState.errorMsg?.let {
                 snackbarHostState.showSnackbar(it)
                 viewModel.clearError()

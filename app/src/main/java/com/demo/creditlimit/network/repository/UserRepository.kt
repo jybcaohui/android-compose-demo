@@ -25,6 +25,10 @@ class UserRepository(
     fun getUserProfile(): Flow<NetworkResult<UserProfileResp>> =
         executeRequest { apiService.getUserProfile() }
 
+    suspend fun getProfileBitmask(): Int = runCatching {
+        apiService.getUserProfile().data?.profile ?: 0
+    }.getOrElse { 0 }
+
     fun submitBasicInfo(request: BasicUpdateReqV2): Flow<NetworkResult<Void>> =
         executeRequest { apiService.submitBasicInfo(request) }
 
