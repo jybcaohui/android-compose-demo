@@ -70,6 +70,7 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.process)
 
     // Google Advertising ID
     implementation(libs.play.services.ads.identifier)

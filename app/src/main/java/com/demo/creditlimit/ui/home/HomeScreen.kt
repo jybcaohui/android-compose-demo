@@ -51,6 +51,7 @@ import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.navigation.Screen
 import com.demo.creditlimit.network.manager.PermissionManager
+import com.demo.creditlimit.ui.webview.H5WebviewActivity
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -190,6 +191,7 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 private fun DebugPageList(navController: NavController) {
+    val context = LocalContext.current
     val pages = listOf(
         "Login" to Screen.Login.route,
         "Emergency Contact" to Screen.KycEmergencyContact.route,
@@ -225,7 +227,22 @@ private fun DebugPageList(navController: NavController) {
                     tint = Color.Gray
                 )
             }
-            if (index < pages.lastIndex) HorizontalDivider(color = Color(0xFFEEEEEE))
+            HorizontalDivider(color = Color(0xFFEEEEEE))
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { context.startActivity(Intent(context, H5WebviewActivity::class.java)) }
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "H5 Webview", fontSize = 15.sp, color = Color(0xFF212121))
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.Gray
+            )
         }
     }
 }

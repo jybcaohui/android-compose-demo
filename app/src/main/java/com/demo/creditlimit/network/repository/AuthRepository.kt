@@ -41,6 +41,7 @@ class AuthRepository(
         }.onEach { result ->
             if (result is NetworkResult.Success) {
                 tokenManager.saveAccessToken(result.data.token)
+                tokenManager.savePhone(phone)
             }
         }
 

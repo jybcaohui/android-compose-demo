@@ -11,11 +11,15 @@ class TokenManager private constructor(private val context: Context) {
 
     @Volatile
     private var cachedAccessToken: String? = null
+    @Volatile
+    private var cachedPhone: String? = null
 
     fun getCachedToken(): String? = cachedAccessToken
+    fun getCachedPhone(): String? = cachedPhone
 
     private val accessTokenKey = stringPreferencesKey("access_token")
     private val refreshTokenKey = stringPreferencesKey("refresh_token")
+    private val phoneKey = stringPreferencesKey("user_phone")
 
     val accessTokenFlow: Flow<String?> = context.appDataStore.data.map { it[accessTokenKey] }
     val refreshTokenFlow: Flow<String?> = context.appDataStore.data.map { it[refreshTokenKey] }
@@ -29,16 +33,25 @@ class TokenManager private constructor(private val context: Context) {
         context.appDataStore.edit { it[refreshTokenKey] = token }
     }
 
+    suspend fun savePhone(phone: String) {
+        cachedPhone = phone
+        context.appDataStore.edit { it[phoneKey] = phone }
+    }
+
     suspend fun clearTokens() {
         cachedAccessToken = null
+        cachedPhone = null
         context.appDataStore.edit { prefs ->
             prefs.remove(accessTokenKey)
             prefs.remove(refreshTokenKey)
+            prefs.remove(phoneKey)
         }
     }
 
     suspend fun loadFromDataStore() {
-        cachedAccessToken = context.appDataStore.data.firstOrNull()?.get(accessTokenKey)
+        val prefs = context.appDataStore.data.firstOrNull()
+        cachedAccessToken = prefs?.get(accessTokenKey)
+        cachedPhone = prefs?.get(phoneKey)
     }
 
     companion object {
