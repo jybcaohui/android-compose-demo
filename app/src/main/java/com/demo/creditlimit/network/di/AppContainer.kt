@@ -35,7 +35,7 @@ class AppContainer(context: Context) {
     val configRepository: ConfigRepository = ConfigRepository(apiService, context)
     val runtimeManager: RuntimeManager = RuntimeManager(context, apiService, gaidManager)
 
-    val appName: String = "SweetMoney"
+    val appName: String = "LoanCredit"
 
     /**
      * null = DataStore not yet loaded

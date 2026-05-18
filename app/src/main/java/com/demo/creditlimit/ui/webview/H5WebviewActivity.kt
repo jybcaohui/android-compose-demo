@@ -64,7 +64,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 
-private const val H5_TEST_URL = "http://api.rp735.xyz/fnzln27/finzyloan.html#/"
+private const val H5_TEST_URL = "http://api.rp735.xyz/lc825/loancredit.html#/"
 private const val H5_FRAGMENT_TAG = "h5_webview_fragment"
 
 class H5WebviewActivity : FragmentActivity(), LifecycleEventObserver {
@@ -240,7 +240,7 @@ class H5WebviewActivity : FragmentActivity(), LifecycleEventObserver {
             val json = JSONObject.quote(gson.toJson(msg))
             lifecycleScope.launch(Dispatchers.Main) {
                 (supportFragmentManager.findFragmentByTag(H5_FRAGMENT_TAG) as? H5WebviewFragment)
-                    ?.evaluateJS("javascript:callJS($json)")
+                    ?.evaluateJS("javascript:callJs($json)")
             }
         } catch (_: Exception) {}
     }
