@@ -70,6 +70,10 @@ fun BasicInfoScreen(navController: NavController) {
     val snackbarHostState = remember { SnackbarHostState() }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    LaunchedEffect(Unit) {
+        application.container.runtimeManager.uploadAsync()
+    }
+
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is BasicUiState.SubmitSuccess -> {

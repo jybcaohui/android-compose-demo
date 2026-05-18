@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.demo.creditlimit.network.api.ApiService
 import com.demo.creditlimit.network.manager.GaidManager
 import com.demo.creditlimit.network.manager.RetrofitManager
+import com.demo.creditlimit.network.manager.RuntimeManager
 import com.demo.creditlimit.network.manager.TokenManager
 import com.demo.creditlimit.network.repository.AuthRepository
 import com.demo.creditlimit.network.repository.ConfigRepository
@@ -32,8 +33,9 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository = AuthRepository(apiService, tokenManager)
     val userRepository: UserRepository = UserRepository(apiService)
     val configRepository: ConfigRepository = ConfigRepository(apiService, context)
+    val runtimeManager: RuntimeManager = RuntimeManager(context, apiService, gaidManager)
 
-    val appName: String = "creditlimit"
+    val appName: String = "SweetMoney"
 
     /**
      * null = DataStore not yet loaded

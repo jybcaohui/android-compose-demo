@@ -55,7 +55,8 @@ fun BindCardScreen(navController: NavController) {
         factory = application.container.viewModelFactory {
             BindCardViewModel(
                 configRepository = application.container.configRepository,
-                userRepository = application.container.userRepository
+                userRepository = application.container.userRepository,
+                runtimeManager = application.container.runtimeManager
             )
         }
     )

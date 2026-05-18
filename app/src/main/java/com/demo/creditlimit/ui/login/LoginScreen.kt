@@ -1,5 +1,10 @@
 package com.demo.creditlimit.ui.login
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,18 +22,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +61,9 @@ import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
 import com.demo.creditlimit.navigation.Screen
+import com.demo.creditlimit.network.manager.PermissionManager
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val LoginBlue = Color(0xFF1B7FE8)
 private val LoginGray = Color(0xFFB0BEC5)
@@ -77,6 +87,7 @@ fun LoginScreen(navController: NavController) {
 
     val uiState by loginViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var phone by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
@@ -90,6 +101,29 @@ fun LoginScreen(navController: NavController) {
 
     var countdownSeconds by remember { mutableIntStateOf(0) }
     var countdownKey by remember { mutableIntStateOf(0) }
+    var pendingKycRoute by remember { mutableStateOf<String?>(null) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val allGranted = results.values.all { it }
+        if (allGranted) {
+            scope.launch { application.container.runtimeManager.uploadAsync() }
+            pendingKycRoute?.let { route ->
+                navController.navigate(route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+            }
+        } else {
+            val hasPermanent = results.entries.any { (perm, granted) ->
+                !granted && !androidx.core.app.ActivityCompat
+                    .shouldShowRequestPermissionRationale(context as androidx.activity.ComponentActivity, perm)
+            }
+            if (hasPermanent) showSettingsDialog = true
+        }
+        pendingKycRoute = null
+    }
 
     LaunchedEffect(isOtpSent) {
         if (isOtpSent) countdownKey++
@@ -108,8 +142,15 @@ fun LoginScreen(navController: NavController) {
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is LoginUiState.NavigateTo -> {
-                navController.navigate(state.screen.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+                val missing = PermissionManager.getMissing(context)
+                if (missing.isEmpty()) {
+                    scope.launch { application.container.runtimeManager.uploadAsync() }
+                    navController.navigate(state.screen.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                } else {
+                    pendingKycRoute = state.screen.route
+                    permissionsLauncher.launch(missing.toTypedArray())
                 }
             }
             is LoginUiState.Error -> {
@@ -118,6 +159,26 @@ fun LoginScreen(navController: NavController) {
             }
             else -> Unit
         }
+    }
+
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = { Text("Permission Required") },
+            text = { Text("Please go to Settings to enable the required permissions to continue.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSettingsDialog = false
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }) { Text("Go to Settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSettingsDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

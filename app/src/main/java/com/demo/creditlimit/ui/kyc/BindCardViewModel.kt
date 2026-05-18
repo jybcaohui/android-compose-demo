@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.demo.creditlimit.network.model.request2.BindBankCardReq
 import com.demo.creditlimit.network.model.request2.IfscInfoResp
+import com.demo.creditlimit.network.manager.RuntimeManager
 import com.demo.creditlimit.network.repository.ConfigRepository
 import com.demo.creditlimit.network.repository.UserRepository
 import com.demo.creditlimit.network.state.NetworkResult
@@ -62,7 +63,8 @@ sealed class BindCardUiState {
 
 class BindCardViewModel(
     private val configRepository: ConfigRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val runtimeManager: RuntimeManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BindCardUiState>(BindCardUiState.Loading)
@@ -147,6 +149,7 @@ class BindCardViewModel(
                 when (result) {
                     is NetworkResult.Success, is NetworkResult.Empty -> {
                         configRepository.clearBindCardForm()
+                        launch { runtimeManager.uploadAsync() }
                         _uiState.value = BindCardUiState.SubmitSuccess
                     }
                     is NetworkResult.Error -> {

@@ -1,5 +1,10 @@
 package com.demo.creditlimit.ui.home
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,11 +28,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +50,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.navigation.Screen
+import com.demo.creditlimit.network.manager.PermissionManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,13 +71,67 @@ fun HomeScreen(navController: NavController) {
     val isLoggedIn by application.container.isLoggedIn.collectAsStateWithLifecycle()
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isLoading = uiState is HomeUiState.Loading
+    val scope = rememberCoroutineScope()
+
+    var pendingKycRoute by remember { mutableStateOf<String?>(null) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val allGranted = results.values.all { it }
+        if (allGranted) {
+            scope.launch { application.container.runtimeManager.uploadAsync() }
+            pendingKycRoute?.let { navController.navigate(it) }
+        } else {
+            val hasPermanent = results.entries.any { (perm, granted) ->
+                !granted && !androidx.core.app.ActivityCompat
+                    .shouldShowRequestPermissionRationale(context as androidx.activity.ComponentActivity, perm)
+            }
+            if (hasPermanent) showSettingsDialog = true
+        }
+        pendingKycRoute = null
+        homeViewModel.resetNavigation()
+    }
 
     LaunchedEffect(uiState) {
         if (uiState is HomeUiState.NavigateTo) {
             val screen = (uiState as HomeUiState.NavigateTo).screen
-            navController.navigate(screen.route)
-            homeViewModel.resetNavigation()
+            if (screen == Screen.Login) {
+                navController.navigate(screen.route)
+                homeViewModel.resetNavigation()
+            } else {
+                val missing = PermissionManager.getMissing(context)
+                if (missing.isEmpty()) {
+                    scope.launch { application.container.runtimeManager.uploadAsync() }
+                    navController.navigate(screen.route)
+                    homeViewModel.resetNavigation()
+                } else {
+                    pendingKycRoute = screen.route
+                    permissionsLauncher.launch(missing.toTypedArray())
+                }
+            }
         }
+    }
+
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = { Text("Permission Required") },
+            text = { Text("Please go to Settings to enable the required permissions to continue.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSettingsDialog = false
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }) { Text("Go to Settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSettingsDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(

@@ -14,13 +14,16 @@ class HeaderInterceptor(
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request().newBuilder()
-            .header("Content-Type", "application/json")
+        val original = chain.request()
+        val builder = original.newBuilder()
             .header("Accept", "application/json")
             .header("App-Version", appVersion)
             .header("Platform", "Android")
             .header("Device-Model", deviceModel)
-            .build()
-        return chain.proceed(request)
+        // Only set default Content-Type when not already specified (e.g. octet-stream uploads)
+        if (original.header("Content-Type") == null) {
+            builder.header("Content-Type", "application/json")
+        }
+        return chain.proceed(builder.build())
     }
 }

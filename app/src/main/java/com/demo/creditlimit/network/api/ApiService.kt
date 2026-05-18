@@ -112,6 +112,15 @@ interface ApiService {
     @POST("v1/user/acc/recgFace")
     suspend fun submitFaceRecognition(@Body request: RecgFaceReq): BaseResponse<RecgFaceResp>
 
+    // ── Device runtime ────────────────────────────────────────────────────
+
+    @Headers(
+        "Content-Encoding: gzip",
+        "Content-Type: application/octet-stream"
+    )
+    @POST("v1/user/runtime")
+    suspend fun uploadRuntime(@Body body: okhttp3.RequestBody): retrofit2.Response<Any?>
+
     // ── Credit line ────────────────────────────────────────────────────────
 
     @POST("v1/user/creditLine")
