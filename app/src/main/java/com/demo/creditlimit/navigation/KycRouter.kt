@@ -32,7 +32,7 @@ object KycRouter {
         getStatus(profile, POS_EMERGENCY) == 0 -> Screen.KycEmergencyContact
         getStatus(profile, POS_BASIC_INFO) == 0 -> Screen.KycBasicInfo
         getStatus(profile, POS_OCR) == 0 || getStatus(profile, POS_IDENTITY) == 0 -> Screen.KycOcr
-        getStatus(profile, POS_FACE) == 0 -> Screen.KycOcr  // face recognition launched from OCR screen
+        getStatus(profile, POS_FACE) == 0 -> Screen.KycFace
         getStatus(profile, POS_BIND_CARD) == 0 -> Screen.KycBindCard
         else -> null  // KYC complete
     }

@@ -9,6 +9,8 @@ import com.demo.creditlimit.network.model.request2.Emerge
 import com.demo.creditlimit.network.model.request2.IdentityInfoReq
 import com.demo.creditlimit.network.model.request2.IfscInfoResp
 import com.demo.creditlimit.network.model.request2.OcrUpdateReq
+import com.demo.creditlimit.network.model.request2.RecgFaceReq
+import com.demo.creditlimit.network.model.request2.RecgFaceResp
 import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
 import com.demo.creditlimit.network.model.request2.UserProfileResp
@@ -77,4 +79,8 @@ class UserRepository(
 
     fun submitIdentity(request: IdentityInfoReq): Flow<NetworkResult<Void>> =
         executeRequest { apiService.submitIdentity(request) }
+
+    suspend fun submitFaceRecognition(req: RecgFaceReq): RecgFaceResp? = runCatching {
+        apiService.submitFaceRecognition(req).data
+    }.getOrNull()
 }

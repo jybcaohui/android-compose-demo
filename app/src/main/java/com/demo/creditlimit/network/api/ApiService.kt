@@ -12,6 +12,8 @@ import com.demo.creditlimit.network.model.request2.KycConfigResp
 import com.demo.creditlimit.network.model.request2.LoginReq
 import com.demo.creditlimit.network.model.request2.LoginResp
 import com.demo.creditlimit.network.model.request2.OcrUpdateReq
+import com.demo.creditlimit.network.model.request2.RecgFaceReq
+import com.demo.creditlimit.network.model.request2.RecgFaceResp
 import com.demo.creditlimit.network.model.request2.OssUploadResp
 import com.demo.creditlimit.network.model.request2.SupplementResp
 import com.demo.creditlimit.network.model.request2.SupplementUpdateReqV2
@@ -106,6 +108,9 @@ interface ApiService {
 
     @POST("v1/user/identity")
     suspend fun submitIdentity(@Body request: IdentityInfoReq): BaseResponse<Void>
+
+    @POST("v1/user/acc/recgFace")
+    suspend fun submitFaceRecognition(@Body request: RecgFaceReq): BaseResponse<RecgFaceResp>
 
     // ── Credit line ────────────────────────────────────────────────────────
 

@@ -15,6 +15,7 @@ import com.demo.creditlimit.ui.home.HomeScreen
 import com.demo.creditlimit.ui.kyc.BasicInfoScreen
 import com.demo.creditlimit.ui.kyc.BindCardScreen
 import com.demo.creditlimit.ui.kyc.EmergencyContactScreen
+import com.demo.creditlimit.ui.kyc.FaceScreen
 import com.demo.creditlimit.ui.kyc.OcrScreen
 import com.demo.creditlimit.ui.kyc.SupplementaryInfoScreen
 import com.demo.creditlimit.ui.login.LoginScreen
@@ -64,6 +65,9 @@ fun AppNavGraph(
         }
         composable(Screen.KycOcr.route) {
             OcrScreen(navController = navController)
+        }
+        composable(Screen.KycFace.route) {
+            FaceScreen(navController = navController)
         }
         composable(Screen.CreditResult.route) {
             CreditResultScreen(navController = navController)
