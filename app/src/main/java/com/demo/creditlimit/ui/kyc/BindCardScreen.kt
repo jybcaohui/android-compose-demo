@@ -31,7 +31,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
+import com.demo.creditlimit.network.model.request2.IfscInfoResp
 import com.demo.creditlimit.navigation.KycRouter
 import com.demo.creditlimit.navigation.Screen
 
@@ -163,7 +167,7 @@ private fun BindCardReadyContent(
                     }
                     card.ifscInfo != null -> {
                         Spacer(Modifier.height(8.dp))
-                        IfscInfoCard(card.ifscInfo.bank, card.ifscInfo.branch, card.ifscInfo.city)
+                        IfscInfoCard(card.ifscInfo)
                         Spacer(Modifier.height(8.dp))
                     }
                     card.ifscError != null -> {
@@ -204,7 +208,15 @@ private fun BindCardReadyContent(
 }
 
 @Composable
-private fun IfscInfoCard(bankName: String?, branch: String?, city: String?) {
+private fun IfscInfoCard(info: IfscInfoResp) {
+    val lines = listOf(
+        "BANK" to info.bank,
+        "STATE" to info.state,
+        "DISTRICT" to info.district,
+        "CITY" to info.city,
+        "BRANCH" to info.branch
+    ).filter { !it.second.isNullOrBlank() }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -212,14 +224,19 @@ private fun IfscInfoCard(bankName: String?, branch: String?, city: String?) {
             .background(Color(0xFFE8F4FD))
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        if (!bankName.isNullOrBlank()) {
-            Text(text = bankName, style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = KycText))
-        }
-        if (!branch.isNullOrBlank()) {
-            Text(text = "Branch: $branch", style = TextStyle(fontSize = 12.sp, color = KycLabel))
-        }
-        if (!city.isNullOrBlank()) {
-            Text(text = "City: $city", style = TextStyle(fontSize = 12.sp, color = KycLabel))
+        lines.forEach { (label, value) ->
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = KycText)) {
+                        append(label)
+                    }
+                    withStyle(SpanStyle(color = KycLabel)) {
+                        append(": $value")
+                    }
+                },
+                style = TextStyle(fontSize = 12.sp),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
         }
     }
 }

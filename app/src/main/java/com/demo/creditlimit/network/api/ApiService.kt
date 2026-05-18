@@ -88,7 +88,7 @@ interface ApiService {
     // ── Bank card ─────────────────────────────────────────────────────────────
 
     @GET("v1/user/ifsc/info")
-    suspend fun getIfscInfo(@Query("ifscCode") code: String): BaseResponse<IfscInfoResp>
+    suspend fun getIfscInfo(@Query("ifsc") code: String): BaseResponse<IfscInfoResp>
 
     @POST("v1/user/bindBankCard")
     suspend fun bindBankCard(@Body request: BindBankCardReq): BaseResponse<Void>
