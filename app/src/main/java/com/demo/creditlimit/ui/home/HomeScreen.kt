@@ -1,8 +1,11 @@
 package com.demo.creditlimit.ui.home
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -40,6 +43,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +65,9 @@ import com.demo.creditlimit.CreditLimitApplication
 import com.demo.creditlimit.R
 import com.demo.creditlimit.navigation.Screen
 import com.demo.creditlimit.network.manager.PermissionManager
+import com.demo.creditlimit.ui.privacy.PrivacyPolicyActivity
 import com.demo.creditlimit.ui.webview.H5WebviewActivity
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val HomeBgStart = Color(0xFF4DD0E1)
@@ -88,9 +94,23 @@ fun HomeScreen(navController: NavController) {
     val isLoading = uiState is HomeUiState.Loading
     val scope = rememberCoroutineScope()
 
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var pendingKycRoute by remember { mutableStateOf<String?>(null) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+
+    var backPressedOnce by remember { mutableStateOf(false) }
+    BackHandler {
+        if (backPressedOnce) {
+            (context as? Activity)?.finishAffinity()
+        } else {
+            backPressedOnce = true
+            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+            scope.launch {
+                delay(2000)
+                backPressedOnce = false
+            }
+        }
+    }
 
     val permissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -160,7 +180,10 @@ fun HomeScreen(navController: NavController) {
                     isLoggedIn = isLoggedIn,
                     onGetStarted = { homeViewModel.handleGetStarted() }
                 )
-                1 -> PersonalTab(navController = navController)
+                1 -> PersonalTab(
+                    navController = navController,
+                    onGetStarted = { homeViewModel.handleGetStarted() }
+                )
             }
         }
 
@@ -306,9 +329,10 @@ private fun ProductItem(icon: Int, label: String) {
 // ── Personal Tab ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun PersonalTab(navController: NavController) {
+private fun PersonalTab(navController: NavController, onGetStarted: () -> Unit) {
     val context = LocalContext.current
     val application = context.applicationContext as CreditLimitApplication
+    val isLoggedIn by application.container.isLoggedIn.collectAsStateWithLifecycle()
     val phone = application.container.tokenManager.getCachedPhone() ?: ""
 
     Column(
@@ -323,6 +347,10 @@ private fun PersonalTab(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
+                .then(
+                    if (isLoggedIn != true) Modifier.clickable { onGetStarted() }
+                    else Modifier
+                )
                 .padding(horizontal = 20.dp, vertical = 60.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -336,10 +364,10 @@ private fun PersonalTab(navController: NavController) {
             )
             Spacer(Modifier.width(16.dp))
             Text(
-                text = phone.ifBlank { "—" },
+                text = if (isLoggedIn == true && phone.isNotBlank()) phone else "Not logged in",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF212121)
+                color = if (isLoggedIn == true && phone.isNotBlank()) Color(0xFF212121) else Color(0xFF6E6E6E)
             )
         }
 
@@ -354,7 +382,13 @@ private fun PersonalTab(navController: NavController) {
             PersonalMenuItem(
                 icon = R.drawable.ic_privacy,
                 label = "Privacy Policy",
-                onClick = {}
+                onClick = {
+                    context.startActivity(
+                        Intent(context, PrivacyPolicyActivity::class.java).apply {
+                            putExtra(PrivacyPolicyActivity.EXTRA_SHOW_AGREE, false)
+                        }
+                    )
+                }
             )
             HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = Color(0xFFEEEEEE))
             PersonalMenuItem(

@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +38,15 @@ class AppContainer(context: Context) {
 
     val appName: String = "LoanCredit"
 
+    // null = loading, true/false = loaded
+    private val _privacyAgreed = MutableStateFlow<Boolean?>(null)
+    val privacyAgreedFlow: StateFlow<Boolean?> = _privacyAgreed.asStateFlow()
+
+    suspend fun savePrivacyAgreed() {
+        tokenManager.savePrivacyAgreed()
+        _privacyAgreed.value = true
+    }
+
     /**
      * null = DataStore not yet loaded
      * true  = token exists (logged in)
@@ -54,6 +64,7 @@ class AppContainer(context: Context) {
         appScope.launch {
             tokenManager.loadFromDataStore()
             gaidManager.loadFromDataStore()
+            _privacyAgreed.value = tokenManager.isPrivacyAgreed()
             _initialized.value = true
             gaidManager.fetchAndSave()
         }

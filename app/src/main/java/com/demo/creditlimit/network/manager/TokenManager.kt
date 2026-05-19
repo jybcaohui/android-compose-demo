@@ -1,6 +1,7 @@
 package com.demo.creditlimit.network.manager
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,7 @@ class TokenManager private constructor(private val context: Context) {
     private val accessTokenKey = stringPreferencesKey("access_token")
     private val refreshTokenKey = stringPreferencesKey("refresh_token")
     private val phoneKey = stringPreferencesKey("user_phone")
+    private val privacyAgreedKey = booleanPreferencesKey("privacy_agreed")
 
     val accessTokenFlow: Flow<String?> = context.appDataStore.data.map { it[accessTokenKey] }
     val refreshTokenFlow: Flow<String?> = context.appDataStore.data.map { it[refreshTokenKey] }
@@ -46,6 +48,15 @@ class TokenManager private constructor(private val context: Context) {
             prefs.remove(refreshTokenKey)
             prefs.remove(phoneKey)
         }
+    }
+
+    suspend fun isPrivacyAgreed(): Boolean {
+        val prefs = context.appDataStore.data.firstOrNull()
+        return prefs?.get(privacyAgreedKey) ?: false
+    }
+
+    suspend fun savePrivacyAgreed() {
+        context.appDataStore.edit { it[privacyAgreedKey] = true }
     }
 
     suspend fun loadFromDataStore() {
